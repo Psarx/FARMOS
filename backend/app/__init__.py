@@ -1,8 +1,7 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 
+# Initialize Flask app
 app = Flask(__name__)
-app.config.from_object('config.Config')  # Load configuration from config.py
-db = SQLAlchemy(app)
 
-from app import routes, models  # Import routes and models
+# Import routes after app initialization
+from app import routes
