@@ -12,9 +12,11 @@
 // export default DiseaseDetection;
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const DiseaseDetection = () => {
     const [file, setFile] = useState(null);
+    const navigate = useNavigate();  // useNavigate hook to navigate programmatically
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -33,9 +35,13 @@ const DiseaseDetection = () => {
         alert('Disease detection in progress...');
     };
 
+    const handleLogout = () => {
+        navigate('/login');  // Navigate to login page
+    };
+
     return (
         <div style={styles.container}>
-            <button style={styles.logoutButton} onClick={() => alert('Logged Out Successfully!')}>
+            <button style={styles.logoutButton} onClick={handleLogout}>
                 Logout
             </button>
             
