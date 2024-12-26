@@ -30,6 +30,7 @@ def create_app():
 
     # Import and register routes
     from .routes import auth_routes
-    app.register_blueprint(auth_routes)
+    # app.register_blueprint(auth_routes)
+    app.register_blueprint(auth_routes, url_prefix="/api/auth")
 
     return app
