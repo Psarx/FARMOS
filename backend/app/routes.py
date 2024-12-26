@@ -1,5 +1,5 @@
 import bcrypt
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, send_from_directory, session
 import joblib
 import numpy as np
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -22,6 +22,10 @@ scaler = joblib.load('models/saved_models/scaler.pkl')
 @auth_routes.route('/', methods=['GET'])
 def home():
     return "Welcome to the Flask App!", 200
+
+@auth_routes.route('/favicon.ico')
+def favicon():
+    return send_from_directory(auth_routes.static_folder, 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 # User Registration
 @auth_routes.route('/register', methods=['POST'])
