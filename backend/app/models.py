@@ -26,20 +26,6 @@ class User(db.Model):
     last_login = db.Column(db.DateTime, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
 
-class UserRole(db.Model):
-    __tablename__ = 'user_roles'
-    id = db.Column(db.Integer, primary_key=True)
-    role_name = db.Column(db.String(50), unique=True, nullable=False)
-
-class UserRoleMapping(db.Model):
-    __tablename__ = 'user_role_mapping'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    role_id = db.Column(db.Integer, db.ForeignKey('user_roles.id'), nullable=False)
-
-    user = db.relationship('User', backref=db.backref('roles', lazy=True))
-    role = db.relationship('UserRole', backref=db.backref('users', lazy=True))
-
 
 
 # SoilData Model

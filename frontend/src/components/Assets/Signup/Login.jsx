@@ -10,7 +10,7 @@ const Login = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/login', { email, password });
+      const response = await axios.post('http://localhost:5001/api/auth/login', { email, password });
       onLogin(response.data.user); // Pass user data to parent
       navigate('/home'); // Change this line to use navigate
     } catch (error) {
