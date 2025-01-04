@@ -13,6 +13,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './DiseaseDetection.css';
 
 const DiseaseDetection = () => {
     const [file, setFile] = useState(null);

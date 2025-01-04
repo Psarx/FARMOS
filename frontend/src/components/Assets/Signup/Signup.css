@@ -54,7 +54,7 @@
 .input input {
     width: 300px;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid #ff7b42;
     border-radius: 5px;
     font-size: 16px;
 }
@@ -80,6 +80,17 @@
     color: #666;
 }
 
+.farmos-text {
+    font-family: 'Georgia', serif;  /* Formal font */
+    font-size: 50px;
+    font-weight: bold;
+    color: white; /* Text color */
+    text-align: center; /* Center align the text */
+    padding-top: 0%; /* Vertically center the text in the right panel */
+    margin: 0;
+    text-transform: uppercase; /* Uppercase letters for formal style */
+  }
+  
 .right-panel {
     flex: 1;
     display: flex;

@@ -39,7 +39,7 @@
     },
     "proxy": "http://127.0.0.1:5001",
     "devDependencies": {
-        "webpack-dev-server": "^5.2.0",
-        "@babel/plugin-proposal-private-property-in-object": "^7.0.0"
+        "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+        "webpack-dev-server": "^5.2.0"
     }
 }
