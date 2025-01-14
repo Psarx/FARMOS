@@ -4,6 +4,7 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 
+<<<<<<< HEAD
 # Load environment variables from .env file
 load_dotenv()
 
@@ -34,3 +35,10 @@ def create_app():
     app.register_blueprint(auth_routes, url_prefix="/api/auth")
 
     return app
+=======
+# Initialize the Flask app
+app = Flask(__name__)
+
+# Import routes AFTER initializing the app
+from app import routes
+>>>>>>> main

@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import bcrypt
 from flask import Blueprint, request, jsonify, send_from_directory, session
+=======
+from app import app
+from flask import request, jsonify
+>>>>>>> main
 import joblib
 import numpy as np
 from werkzeug.security import generate_password_hash, check_password_hash
