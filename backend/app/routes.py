@@ -1,27 +1,23 @@
-<<<<<<< HEAD
-import bcrypt
 from flask import Blueprint, request, jsonify, send_from_directory, session
-=======
-from app import app
-from flask import request, jsonify
->>>>>>> main
+from flask_cors import CORS
+import bcrypt
 import joblib
 import numpy as np
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from .models import User
-from flask_cors import CORS
-# import logging
-# logging.basicConfig(level=logging.DEBUG)
+# from app import app  # Remove this line as it's not necessary anymore
+
 # Create a Blueprint
 auth_routes = Blueprint('auth', __name__)
 CORS(auth_routes, origins=["http://localhost:5000"])
-
 
 # Load the trained model, label encoder, and scaler
 model = joblib.load('models/saved_models/crop_recommendation_model.pkl')
 label_encoder = joblib.load('models/saved_models/label_encoder.pkl')
 scaler = joblib.load('models/saved_models/scaler.pkl')
+
+# Your existing routes go here...
 
 
 @auth_routes.route('/', methods=['GET'])
@@ -49,9 +45,10 @@ def register():
         return jsonify({"message": "User already exists"}), 409
 
     # Create user
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+
     # logging.debug(f"Received data: {hashed_password}")
-    new_user = User(username=username, email=email, password_hash=hashed_password.decode('utf-8'))
+    new_user = User(username=username, email=email, password_hash=hashed_password)
     try:
         db.session.add(new_user)
         db.session.commit()

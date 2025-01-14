@@ -3,8 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
-
-<<<<<<< HEAD
+from sqlalchemy import text  # Import text from sqlalchemy
 # Load environment variables from .env file
 load_dotenv()
 
@@ -29,16 +28,23 @@ def create_app():
 
     db.init_app(app)
 
+    # Check if the DB is connected successfully
+    try:
+        with app.app_context():
+            db.session.execute(text('SELECT 1'))  # Correctly declare the query using text()
+        print("Database connection successful!")
+    except Exception as e:
+        print(f"Error connecting to the database: {e}")
+        raise e  # Re-raise the exception to stop app initialization in case of failure
+
     # Import and register routes
     from .routes import auth_routes
-    # app.register_blueprint(auth_routes)
     app.register_blueprint(auth_routes, url_prefix="/api/auth")
 
     return app
-=======
+
 # Initialize the Flask app
 app = Flask(__name__)
 
 # Import routes AFTER initializing the app
 from app import routes
->>>>>>> main
