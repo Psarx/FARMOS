@@ -1,7 +1,7 @@
 from flask import Flask
 
-# Initialize Flask app
+# Initialize the Flask app
 app = Flask(__name__)
 
-# Import routes after app initialization
+# Import routes AFTER initializing the app
 from app import routes
