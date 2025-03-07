@@ -6,10 +6,10 @@ import numpy as np
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from .models import User
-# from app import app  # Remove this line as it's not necessary anymore
+from flask import Blueprint, request, jsonify, current_app
+from app.models import User, db
 
-# Create a Blueprint
-auth_routes = Blueprint('auth', __name__)
+auth_routes = Blueprint("auth_routes", __name__)
 CORS(auth_routes, origins=["http://localhost:5000"])
 
 # Load the trained model, label encoder, and scaler
@@ -32,7 +32,10 @@ def favicon():
 @auth_routes.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    # logging.debug(f"Received data: {data}")
+    
+    # Use current_app.logger instead of app.logger
+    current_app.logger.debug(f"Received registration data: {data}")
+
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
@@ -40,24 +43,25 @@ def register():
     if not username or not email or not password:
         return jsonify({"message": "All fields are required"}), 400
 
-    # Check if user exists
-    if User.query.filter((User.username == username) | (User.email == email)).first():
+    existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+    if existing_user:
         return jsonify({"message": "User already exists"}), 409
 
-    # Create user
-    hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
-
-    # logging.debug(f"Received data: {hashed_password}")
-    new_user = User(username=username, email=email, password_hash=hashed_password)
     try:
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        new_user = User(username=username, email=email, password_hash=hashed_password)
+
         db.session.add(new_user)
         db.session.commit()
+
+        current_app.logger.debug(f"User {username} registered successfully.")
         return jsonify({"message": "Registration successful!"}), 201
+
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f"Error during registration: {str(e)}")
         return jsonify({"message": "An error occurred while registering the user."}), 500
-
-
 
 # User Login
 @auth_routes.route('/login', methods=['POST'])
