@@ -1,7 +1,10 @@
 Flask
 Flask-SQLAlchemy
 pandas
-scikit-learn
+scikit-learn==1.6.0
 joblib
 psycopg2-binary
 Werkzeug
+flask_cors
+dotenv
+bcrypt
