@@ -1,230 +1,18 @@
-// // import React, { useState } from 'react';
-// // import './CropPrediction.css';
-// // import wheatImage from '../../Assets/Images/wheat.jpg';
-
-// // const CropPrediction = () => {
-// //     const [formData, setFormData] = useState({
-// //         nitrogen: '',
-// //         phosphorus: '',
-// //         potassium: '',
-// //         temperature: '',
-// //         humidity: '',
-// //         ph: '',
-// //         rainfall: '',
-// //         location: '',
-// //     });
-
-// //     const handleChange = (e) => {
-// //         setFormData({
-// //             ...formData,
-// //             [e.target.name]: e.target.value,
-// //         });
-// //     };
-
-// //     const handleSubmit = (e) => {
-// //         e.preventDefault();
-// //         alert('Predicting'); // Alert when the button is clicked
-// //         console.log('Submitted Data:', formData);
-
-// //         // Simulate an API call or database update
-// //         alert('Crop Prediction data submitted successfully!');
-// //     };
-
-// //     return (
-// //         <div className="container">
-// //             <div className="main-container">
-// //                 <div className="left-section">
-// //                     <div className="header">
-// //                         <div className="text">Crop Prediction</div>
-// //                         <div className="underline"></div>
-// //                     </div>
-// //                     <form className="inputs" onSubmit={handleSubmit}>
-// //                         {Object.keys(formData).map((key) => (
-// //                             <div key={key} className="input">
-// //                                 <input
-// //                                     type="text"
-// //                                     placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
-// //                                     name={key}
-// //                                     value={formData[key]}
-// //                                     onChange={handleChange}
-// //                                     required
-// //                                 />
-// //                             </div>
-// //                         ))}
-// //                         <div className="submit-container">
-// //                             <button type="submit" className="submit">
-// //                                 Predict Crop
-// //                             </button>
-// //                         </div>
-// //                     </form>
-// //                 </div>
-// //                 <div className="right-panel">
-// //                     <img src={wheatImage} alt="Wheat background" className="background-image" />
-// //                 </div>
-// //             </div>
-// //         </div>
-// //     );
-// // };
-
-// // export default CropPrediction;
-
-
-// import React, { useState } from 'react';
-// import './CropPrediction.css';
-// import wheatImage from '../../Assets/Images/wheat.jpg';
-
-// const CropPrediction = () => {
-//     const [formData, setFormData] = useState({
-//         nitrogen: '',
-//         phosphorus: '',
-//         potassium: '',
-//         temperature: '',
-//         humidity: '',
-//         ph: '',
-//         rainfall: '',
-//         location: '',
-//     });
-
-//     const handleChange = (e) => {
-//         setFormData({
-//             ...formData,
-//             [e.target.name]: e.target.value,
-//         });
-//     };
-
-//     const handleSubmit = (e) => {
-//         e.preventDefault();
-//         console.log('Submitted Data:', formData);
-
-//         // Simulate an API call or database update
-//         alert('Crop Prediction and Recommendation data submitted successfully!');
-//     };
-
-//     return (
-//         <div className="container">
-//             <div className="main-container">
-//                 <div className="left-section">
-//                     <div className="header">
-//                         <div className="text">Crop Prediction & Recommendation</div>
-//                         <div className="underline"></div>
-//                     </div>
-//                     <form className="inputs" onSubmit={handleSubmit}>
-//                         <div className="form-section">
-//                             <div className="section-title">Soil and Weather Details</div>
-//                             <div className="input">
-//                                 <input
-//                                     type="text"
-//                                     placeholder="Nitrogen (N)"
-//                                     name="nitrogen"
-//                                     value={formData.nitrogen}
-//                                     onChange={handleChange}
-//                                     required
-//                                 />
-//                             </div>
-//                             <div className="input">
-//                                 <input
-//                                     type="text"
-//                                     placeholder="Phosphorus (P)"
-//                                     name="phosphorus"
-//                                     value={formData.phosphorus}
-//                                     onChange={handleChange}
-//                                     required
-//                                 />
-//                             </div>
-//                             <div className="input">
-//                                 <input
-//                                     type="text"
-//                                     placeholder="Potassium (K)"
-//                                     name="potassium"
-//                                     value={formData.potassium}
-//                                     onChange={handleChange}
-//                                     required
-//                                 />
-//                             </div>
-//                             <div className="input">
-//                                 <input
-//                                     type="text"
-//                                     placeholder="pH Level"
-//                                     name="ph"
-//                                     value={formData.ph}
-//                                     onChange={handleChange}
-//                                     required
-//                                 />
-//                             </div>
-//                         </div>
-//                         <div className="form-section">
-//                             <div className="section-title">Environmental Conditions</div>
-//                             <div className="input">
-//                                 <input
-//                                     type="text"
-//                                     placeholder="Temperature (°C)"
-//                                     name="temperature"
-//                                     value={formData.temperature}
-//                                     onChange={handleChange}
-//                                     required
-//                                 />
-//                             </div>
-//                             <div className="input">
-//                                 <input
-//                                     type="text"
-//                                     placeholder="Humidity (%)"
-//                                     name="humidity"
-//                                     value={formData.humidity}
-//                                     onChange={handleChange}
-//                                     required
-//                                 />
-//                             </div>
-//                             <div className="input">
-//                                 <input
-//                                     type="text"
-//                                     placeholder="Rainfall (mm)"
-//                                     name="rainfall"
-//                                     value={formData.rainfall}
-//                                     onChange={handleChange}
-//                                     required
-//                                 />
-//                             </div>
-//                             <div className="input">
-//                                 <input
-//                                     type="text"
-//                                     placeholder="Location"
-//                                     name="location"
-//                                     value={formData.location}
-//                                     onChange={handleChange}
-//                                     required
-//                                 />
-//                             </div>
-//                         </div>
-//                         <div className="submit-container">
-//                             <button type="submit" className="submit">
-//                                 Recommend Crop
-//                             </button>
-//                         </div>
-//                     </form>
-//                 </div>
-//                 <div className="right-panel">
-//                     <img src={wheatImage} alt="Wheat background" className="background-image" />
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// };
-
-// export default CropPrediction;
-
 import React, { useState } from 'react';
 
 const CropPrediction = () => {
     const [formData, setFormData] = useState({
-        nitrogen: '',
-        phosphorus: '',
-        potassium: '',
+        N: '',
+        P: '',
+        K: '',
         temperature: '',
         humidity: '',
         ph: '',
         rainfall: '',
-        location: '',
     });
+
+    const [responseData, setResponseData] = useState(null);
+    const [error, setError] = useState(null);
 
     const handleChange = (e) => {
         setFormData({
@@ -233,12 +21,38 @@ const CropPrediction = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Submitted Data:', formData);
+        setResponseData(null);
+        setError(null);
 
-        // Simulate an API call or database update
-        alert('Crop Prediction data submitted successfully!');
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    N: parseFloat(formData.N),
+                    P: parseFloat(formData.P),
+                    K: parseFloat(formData.K),
+                    temperature: parseFloat(formData.temperature),
+                    humidity: parseFloat(formData.humidity),
+                    ph: parseFloat(formData.ph),
+                    rainfall: parseFloat(formData.rainfall),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setResponseData(data); // Store the full JSON response
+            } else {
+                setError(data.message || 'Error predicting crop');
+            }
+        } catch (err) {
+            setError('Failed to connect to the backend');
+        }
     };
 
     return (
@@ -265,52 +79,106 @@ const CropPrediction = () => {
                     Predict Crop
                 </button>
             </form>
+
+            {responseData && (
+                <div style={styles.resultContainer}>
+                    <h2 style={styles.result}>Response from Backend:</h2>
+                    <pre style={styles.jsonResponse}>{JSON.stringify(responseData, null, 2)}</pre>
+                </div>
+            )}
+            {error && (
+                <div style={styles.errorContainer}>
+                    <h2 style={styles.error}>{error}</h2>
+                </div>
+            )}
         </div>
     );
 };
 
 const styles = {
     container: {
-        maxWidth: '500px',
-        margin: '50px auto',
-        padding: '20px',
-        borderRadius: '10px',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-        backgroundColor: '#fff',
-        fontFamily: 'Arial, sans-serif',
+        textAlign: 'center',
+        padding: '30px',
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
     },
     header: {
-        textAlign: 'center',
-        color: '#333',
+        fontSize: '28px',
+        fontWeight: 'bold',
         marginBottom: '20px',
+        color: '#333',
     },
     form: {
         display: 'flex',
         flexDirection: 'column',
-        gap: '15px',
+        alignItems: 'center',
+        padding: '20px',
+        backgroundColor: '#fff',
+        borderRadius: '10px',
+        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+        width: '350px',
+        margin: '0 auto',
     },
     inputGroup: {
-        display: 'flex',
-        flexDirection: 'column',
+        width: '100%',
+        marginBottom: '15px',
     },
     label: {
-        marginBottom: '5px',
+        display: 'block',
         fontWeight: 'bold',
+        marginBottom: '5px',
+        color: '#555',
     },
     input: {
+        width: '100%',
         padding: '10px',
         borderRadius: '5px',
         border: '1px solid #ccc',
+        fontSize: '16px',
     },
     submitButton: {
-        padding: '10px 15px',
+        width: '100%',
+        padding: '10px',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        color: '#fff',
+        backgroundColor: '#007bff',
         border: 'none',
         borderRadius: '5px',
-        backgroundColor: 'orange',
-        color: 'white',
-        fontWeight: 'bold',
         cursor: 'pointer',
-        textAlign: 'center',
+        transition: 'background 0.3s',
+    },
+    resultContainer: {
+        marginTop: '20px',
+        padding: '15px',
+        backgroundColor: '#e3fcef',
+        borderRadius: '5px',
+        display: 'inline-block',
+        textAlign: 'left',
+    },
+    result: {
+        color: '#155724',
+        fontWeight: 'bold',
+    },
+    jsonResponse: {
+        fontSize: '14px',
+        backgroundColor: '#fff',
+        padding: '10px',
+        borderRadius: '5px',
+        boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
+        whiteSpace: 'pre-wrap',
+        wordWrap: 'break-word',
+    },
+    errorContainer: {
+        marginTop: '20px',
+        padding: '15px',
+        backgroundColor: '#f8d7da',
+        borderRadius: '5px',
+        display: 'inline-block',
+    },
+    error: {
+        color: '#721c24',
+        fontWeight: 'bold',
     },
 };
 
