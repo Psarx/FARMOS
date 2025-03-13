@@ -24,8 +24,8 @@ const Signup = () => {
   };
 
   return (
-    <div className="container">
-      <div className="main-container">
+    <div className="container1">
+      <div className="main-container1">
         <div className="left-section">
           <div className="header">
             <div className="text">{action}</div>

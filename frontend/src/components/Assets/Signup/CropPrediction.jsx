@@ -55,10 +55,19 @@ const CropPrediction = () => {
         }
     };
 
+    const handleLogout = () => {
+        console.log('Logged out'); 
+    };
+
     return (
-        <div style={styles.container}>
-            <div style={styles.formContainer}>
-                <h1 style={styles.header}>🌾 Crop Prediction</h1>
+        <div style={styles.pageContainer}>
+            <div style={styles.container}>
+                <button onClick={handleLogout} style={styles.logoutButton}>
+                    Logout
+                </button>
+
+                <h1 style={styles.header}>Crop Prediction</h1>
+
                 <form style={styles.form} onSubmit={handleSubmit}>
                     {Object.keys(formData).map((key) => (
                         <div key={key} style={styles.inputGroup}>
@@ -98,34 +107,49 @@ const CropPrediction = () => {
 };
 
 const styles = {
-    container: {
+    pageContainer: {
         height: '100vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        background: 'linear-gradient(to bottom, #ff9900, #ffffff)', /* Orange to White Gradient */
-        fontFamily: "'Poppins', sans-serif",
+        backgroundColor: '#f5f5f5', // Light gray background
     },
-    formContainer: {
+    container: {
         background: '#fff',
-        padding: '30px',
+        padding: '40px',
         borderRadius: '12px',
         boxShadow: '0px 10px 20px rgba(0, 0, 0, 0.1)',
-        width: '400px',
+        width: '500px',
         textAlign: 'center',
+    },
+    logoutButton: {
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        padding: '10px 20px',
+        backgroundColor: '#ff4d4d',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontWeight: 'bold',
     },
     header: {
         fontSize: '24px',
         fontWeight: 'bold',
+        textAlign: 'center',
         marginBottom: '20px',
-        color: '#ff8800',
+        color: '#fff',
+        backgroundColor: '#ff7700',
+        padding: '10px',
+        borderRadius: '6px',
     },
     form: {
         display: 'flex',
         flexDirection: 'column',
+        gap: '15px',
     },
     inputGroup: {
-        marginBottom: '15px',
         textAlign: 'left',
     },
     label: {
@@ -137,11 +161,12 @@ const styles = {
     input: {
         width: '100%',
         padding: '12px',
-        borderRadius: '8px',
-        border: '1px solid #ddd',
+        borderRadius: '6px',
+        border: '1px solid #ccc',
         fontSize: '16px',
         outline: 'none',
         transition: 'border-color 0.3s',
+        boxSizing: 'border-box',
     },
     submitButton: {
         width: '100%',
@@ -151,12 +176,9 @@ const styles = {
         color: '#fff',
         backgroundColor: '#ff7700',
         border: 'none',
-        borderRadius: '8px',
+        borderRadius: '6px',
         cursor: 'pointer',
         transition: 'background 0.3s',
-    },
-    submitButtonHover: {
-        backgroundColor: '#ff5500',
     },
     resultContainer: {
         marginTop: '20px',

@@ -6,23 +6,23 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(to bottom, #ff7b42, white); /* Yellow to White gradient */
+    background: linear-gradient(to bottom, white, white); /* Yellow to White gradient */
     font-family: Arial, sans-serif;
   }
   
 
-  .container {
+  .container1 {
     margin: 0;
     padding: 0;
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(to bottom,#ff7b42, white); /* Yellow to White gradient */
+    background: linear-gradient(to bottom,white, white); /* Yellow to White gradient */
     font-family: Arial, sans-serif;
   }
   
-.main-container {
+.main-container1 {
     display: flex;
     width: 900px; /* Adjust the container width */
     height: 500px; /* Adjust height as needed */
