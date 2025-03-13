@@ -2,23 +2,24 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './Signup.css';
-import wheatImage from '../../Assets/Images/wheat.jpg'; // Corrected path to the image
+import wheatImage from '../../Assets/Images/wheat.jpg'; // Corrected image path
 
 const Signup = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate();
   const [action, setAction] = useState('Sign Up');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const endpoint = action === 'Sign Up' ? 'register' : 'login';
     try {
-      await axios.post('http://localhost:5001/api/auth/login', { username, email, password });
-      alert('Signup successful! Please log in.');
-      navigate('/home'); // Redirect to login page
+      await axios.post(`http://localhost:5001/api/auth/${endpoint}`, { username, email, password });
+      alert(`${action} successful!`);
+      navigate('/home'); // Redirect after success
     } catch (error) {
-      alert('Signup failed: ' + (error.response?.data?.message || error.message));
+      alert(`${action} failed: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -60,22 +61,14 @@ const Signup = () => {
                 required
               />
             </div>
-            <button type="submit">{action}</button>
+            <button type="submit" className="orange-button">{action}</button>
           </form>
-          <div className="submit-container">
-            <div
-              className={action === 'Login' ? 'submit gray' : 'submit'}
-              onClick={() => setAction('Sign Up')}
-            >
-              Sign Up
-            </div>
-            <div
-              className={action === 'Sign Up' ? 'submit gray' : 'submit'}
-              onClick={() => setAction('Login')}
-            >
-              Login
-            </div>
-          </div>
+          <button
+            className="orange-button action-button"
+            onClick={() => setAction(action === 'Sign Up' ? 'Login' : 'Sign Up')}
+          >
+            {action === 'Sign Up' ? 'Login' : 'Sign Up'}
+          </button>
         </div>
         <div className="right-panel">
           <img src={wheatImage} alt="Wheat background" className="background-image" />

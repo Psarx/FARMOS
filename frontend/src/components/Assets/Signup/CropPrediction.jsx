@@ -46,7 +46,7 @@ const CropPrediction = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setResponseData(data); // Store the full JSON response
+                setResponseData(data);
             } else {
                 setError(data.message || 'Error predicting crop');
             }
@@ -57,107 +57,116 @@ const CropPrediction = () => {
 
     return (
         <div style={styles.container}>
-            <h1 style={styles.header}>Crop Prediction</h1>
-            <form style={styles.form} onSubmit={handleSubmit}>
-                {Object.keys(formData).map((key) => (
-                    <div key={key} style={styles.inputGroup}>
-                        <label style={styles.label} htmlFor={key}>
-                            {key.charAt(0).toUpperCase() + key.slice(1)}:
-                        </label>
-                        <input
-                            type="text"
-                            id={key}
-                            name={key}
-                            value={formData[key]}
-                            onChange={handleChange}
-                            style={styles.input}
-                            required
-                        />
-                    </div>
-                ))}
-                <button type="submit" style={styles.submitButton}>
-                    Predict Crop
-                </button>
-            </form>
+            <div style={styles.formContainer}>
+                <h1 style={styles.header}>🌾 Crop Prediction</h1>
+                <form style={styles.form} onSubmit={handleSubmit}>
+                    {Object.keys(formData).map((key) => (
+                        <div key={key} style={styles.inputGroup}>
+                            <label style={styles.label} htmlFor={key}>
+                                {key.charAt(0).toUpperCase() + key.slice(1)}:
+                            </label>
+                            <input
+                                type="number"
+                                id={key}
+                                name={key}
+                                value={formData[key]}
+                                onChange={handleChange}
+                                style={styles.input}
+                                required
+                            />
+                        </div>
+                    ))}
+                    <button type="submit" style={styles.submitButton}>
+                        Predict Crop
+                    </button>
+                </form>
 
-            {responseData && (
-                <div style={styles.resultContainer}>
-                    <h2 style={styles.result}>Response from Backend:</h2>
-                    <pre style={styles.jsonResponse}>{JSON.stringify(responseData, null, 2)}</pre>
-                </div>
-            )}
-            {error && (
-                <div style={styles.errorContainer}>
-                    <h2 style={styles.error}>{error}</h2>
-                </div>
-            )}
+                {responseData && (
+                    <div style={styles.resultContainer}>
+                        <h2 style={styles.result}>🌱 Suggested Crop:</h2>
+                        <pre style={styles.jsonResponse}>{JSON.stringify(responseData, null, 2)}</pre>
+                    </div>
+                )}
+                {error && (
+                    <div style={styles.errorContainer}>
+                        <h2 style={styles.error}>⚠️ {error}</h2>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
 
 const styles = {
     container: {
-        textAlign: 'center',
+        height: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'linear-gradient(to bottom, #ff9900, #ffffff)', /* Orange to White Gradient */
+        fontFamily: "'Poppins', sans-serif",
+    },
+    formContainer: {
+        background: '#fff',
         padding: '30px',
-        backgroundColor: '#f5f5f5',
-        minHeight: '100vh',
+        borderRadius: '12px',
+        boxShadow: '0px 10px 20px rgba(0, 0, 0, 0.1)',
+        width: '400px',
+        textAlign: 'center',
     },
     header: {
-        fontSize: '28px',
+        fontSize: '24px',
         fontWeight: 'bold',
         marginBottom: '20px',
-        color: '#333',
+        color: '#ff8800',
     },
     form: {
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        padding: '20px',
-        backgroundColor: '#fff',
-        borderRadius: '10px',
-        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-        width: '350px',
-        margin: '0 auto',
     },
     inputGroup: {
-        width: '100%',
         marginBottom: '15px',
+        textAlign: 'left',
     },
     label: {
         display: 'block',
-        fontWeight: 'bold',
-        marginBottom: '5px',
+        fontWeight: '600',
         color: '#555',
+        marginBottom: '5px',
     },
     input: {
         width: '100%',
-        padding: '10px',
-        borderRadius: '5px',
-        border: '1px solid #ccc',
+        padding: '12px',
+        borderRadius: '8px',
+        border: '1px solid #ddd',
         fontSize: '16px',
+        outline: 'none',
+        transition: 'border-color 0.3s',
     },
     submitButton: {
         width: '100%',
-        padding: '10px',
+        padding: '12px',
         fontSize: '16px',
         fontWeight: 'bold',
         color: '#fff',
-        backgroundColor: '#007bff',
+        backgroundColor: '#ff7700',
         border: 'none',
-        borderRadius: '5px',
+        borderRadius: '8px',
         cursor: 'pointer',
         transition: 'background 0.3s',
+    },
+    submitButtonHover: {
+        backgroundColor: '#ff5500',
     },
     resultContainer: {
         marginTop: '20px',
         padding: '15px',
-        backgroundColor: '#e3fcef',
-        borderRadius: '5px',
-        display: 'inline-block',
-        textAlign: 'left',
+        backgroundColor: '#fffbec',
+        borderRadius: '8px',
+        textAlign: 'center',
     },
     result: {
-        color: '#155724',
+        color: '#d98300',
         fontWeight: 'bold',
     },
     jsonResponse: {
@@ -172,12 +181,12 @@ const styles = {
     errorContainer: {
         marginTop: '20px',
         padding: '15px',
-        backgroundColor: '#f8d7da',
-        borderRadius: '5px',
-        display: 'inline-block',
+        backgroundColor: '#ffe0e0',
+        borderRadius: '8px',
+        textAlign: 'center',
     },
     error: {
-        color: '#721c24',
+        color: '#b00020',
         fontWeight: 'bold',
     },
 };
