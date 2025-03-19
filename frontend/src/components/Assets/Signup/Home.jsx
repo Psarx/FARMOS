@@ -14,8 +14,9 @@ const Home = () => {
     };
 
     const handleDiseaseDetection = () => {
-        navigate('/disease-detection');
+        window.location.href = 'http://localhost:8501';
     };
+    
 
     return (
         <div style={styles.pageContainer}>

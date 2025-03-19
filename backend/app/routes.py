@@ -1,13 +1,9 @@
-from flask import Blueprint, request, jsonify, send_from_directory, session
+from flask import Blueprint, request, jsonify, send_from_directory, session, current_app
 from flask_cors import CORS
-import bcrypt
-import joblib
-import numpy as np
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import db
-from .models import User
-from flask import Blueprint, request, jsonify, current_app
-from app.models import User, db
+import joblib
+import pandas as pd
+from .models import User, db
 
 auth_routes = Blueprint("auth_routes", __name__)
 CORS(auth_routes, origins=["http://localhost:5000"])
@@ -16,9 +12,6 @@ CORS(auth_routes, origins=["http://localhost:5000"])
 model = joblib.load('models/saved_models/crop_recommendation_model.pkl')
 label_encoder = joblib.load('models/saved_models/label_encoder.pkl')
 scaler = joblib.load('models/saved_models/scaler.pkl')
-
-# Your existing routes go here...
-
 
 @auth_routes.route('/', methods=['GET'])
 def home():
@@ -32,8 +25,6 @@ def favicon():
 @auth_routes.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    
-    # Use current_app.logger instead of app.logger
     current_app.logger.debug(f"Received registration data: {data}")
 
     username = data.get('username')
@@ -48,10 +39,8 @@ def register():
         return jsonify({"message": "User already exists"}), 409
 
     try:
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
+        hashed_password = generate_password_hash(password)
         new_user = User(username=username, email=email, password_hash=hashed_password)
-
         db.session.add(new_user)
         db.session.commit()
 
@@ -67,7 +56,6 @@ def register():
 @auth_routes.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    # logging.debug(f"Received data: {data}")
     email = data.get('email')
     password = data.get('password')
 
@@ -78,16 +66,12 @@ def login():
     if not user:
         return jsonify({"message": "User not found"}), 404
 
-    # Check the password by directly comparing the entered password with the stored hash
-    if bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
-        # Save user info in session
+    if check_password_hash(user.password_hash, password):
         session['user_id'] = user.id
         session['username'] = user.username
         return jsonify({"message": "Login successful", "user": {"id": user.id, "username": user.username}}), 200
-
     else:
         return jsonify({"message": "Invalid credentials"}), 401
-
 
 # User Logout
 @auth_routes.route('/logout', methods=['POST'])
@@ -98,23 +82,16 @@ def logout():
 # Crop Recommendation
 @auth_routes.route('/predict', methods=['POST'])
 def predict():
-    data = request.json  # Get JSON data from the request
-
+    data = request.json
     try:
-        # Extract soil and environmental features
-        features = np.array([[
+        input_data = pd.DataFrame([[
             data['N'], data['P'], data['K'],
             data['temperature'], data['humidity'],
             data['ph'], data['rainfall']
-        ]])
+        ]], columns=['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall'])
 
-        # Normalize the features using the scaler
-        features_scaled = scaler.transform(features)
-
-        # Make the prediction
+        features_scaled = scaler.transform(input_data)
         prediction = model.predict(features_scaled)
-
-        # Decode the prediction (crop label)
         crop = label_encoder.inverse_transform(prediction)
 
         return jsonify({'recommended_crop': crop[0]}), 200

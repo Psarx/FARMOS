@@ -16,7 +16,7 @@ def create_app():
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback_secret_key')  # Fallback key if not found
 
     # Enable CORS
-    CORS(app, origins=[os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5000')])
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
     # Database Configuration from .env
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://MainProject_owner:Q89rbOjImFDi@ep-rough-water-a5q7g77n.us-east-2.aws.neon.tech/MainProject?sslmode=require'
