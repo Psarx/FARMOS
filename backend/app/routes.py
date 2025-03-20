@@ -3,7 +3,7 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import joblib
 import pandas as pd
-from .models import User, db
+from .models import User, db, Crop  # Import the Crop model
 
 auth_routes = Blueprint("auth_routes", __name__)
 CORS(auth_routes, origins=["http://localhost:5000"])
@@ -84,11 +84,8 @@ def logout():
 def predict():
     data = request.json
     try:
-        input_data = pd.DataFrame([[
-            data['N'], data['P'], data['K'],
-            data['temperature'], data['humidity'],
-            data['ph'], data['rainfall']
-        ]], columns=['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall'])
+        input_data = pd.DataFrame([[data['N'], data['P'], data['K'], data['temperature'], data['humidity'], data['ph'], data['rainfall']]],
+                                  columns=['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall'])
 
         features_scaled = scaler.transform(input_data)
         prediction = model.predict(features_scaled)
@@ -99,3 +96,43 @@ def predict():
         return jsonify({"message": f"Missing parameter: {str(e)}"}), 400
     except Exception as e:
         return jsonify({"message": "An error occurred during prediction", "error": str(e)}), 500
+
+# Add Crop to Database
+@auth_routes.route('/add_crop', methods=['POST'])
+def add_crop():
+    data = request.get_json()
+
+    name = data.get('name')
+    description = data.get('description')
+
+    if not name or not description:
+        return jsonify({"message": "Crop name and description are required"}), 400
+
+    existing_crop = Crop.query.filter_by(name=name).first()
+    if existing_crop:
+        return jsonify({"message": "Crop already exists"}), 409
+
+    try:
+        new_crop = Crop(name=name, description=description)
+        db.session.add(new_crop)
+        db.session.commit()
+        return jsonify({"message": "Crop added successfully!"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "An error occurred while adding the crop", "error": str(e)}), 500
+
+
+@auth_routes.route('/get_crop/<string:name>', methods=['GET'])
+def get_crop(name):
+    try:
+        crop = Crop.query.filter_by(name=name).first()
+        if not crop:
+            return jsonify({"message": "Crop not found"}), 404
+
+        return jsonify({
+            "name": crop.name,
+            "description": crop.description
+        }), 200
+
+    except Exception as e:
+        return jsonify({"message": "An error occurred while fetching the crop details", "error": str(e)}), 500

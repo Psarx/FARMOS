@@ -66,3 +66,10 @@ class UserCropRecommendation(db.Model):
     user = db.relationship('User', backref=db.backref('crop_recommendations', lazy=True))
     soil_data = db.relationship('SoilData', backref=db.backref('crop_recommendations', lazy=True))
 
+
+class Crop(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.JSON, nullable=False)  # Store description as JSON
+
+

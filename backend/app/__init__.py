@@ -3,11 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
+
 from sqlalchemy import text  # Import text from sqlalchemy
 # Load environment variables from .env file
 load_dotenv()
 
 db = SQLAlchemy()
+
 
 def create_app():
     app = Flask(__name__)

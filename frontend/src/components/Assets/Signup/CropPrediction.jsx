@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
+import riceImage from '../Images/rice.png';
+import "./CropPrediction.css";
 
 const CropPrediction = () => {
     const [formData, setFormData] = useState({
@@ -15,9 +16,11 @@ const CropPrediction = () => {
     });
     const navigate = useNavigate();
 
-    const [recommendedCrop, setRecommendedCrop] = useState(null);
+    const [cropDetails, setCropDetails] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [showResults, setShowResults] = useState(false);
+    const [visiblePoints, setVisiblePoints] = useState([]);
 
     const handleChange = (e) => {
         setFormData({
@@ -28,12 +31,15 @@ const CropPrediction = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setRecommendedCrop(null);
+        setCropDetails(null);
         setError(null);
         setLoading(true);
+        setShowResults(false);
+        setVisiblePoints([]);
 
         try {
-            const response = await fetch("http://localhost:5000/api/auth/predict", {
+            // First, get the prediction from the predict endpoint
+            const predictResponse = await fetch("http://localhost:5000/api/auth/predict", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -49,13 +55,34 @@ const CropPrediction = () => {
                 }),
             });
 
-            const data = await response.json();
+            const predictData = await predictResponse.json();
+            
+            if (!predictResponse.ok) {
+                setLoading(false);
+                setError(predictData.message || "Error predicting crop");
+                return;
+            }
+            
+            const cropName = predictData.recommended_crop;
+            
+            // Now fetch the crop details using the cropName
+            const detailsResponse = await fetch(`http://localhost:5000/api/auth/get_crop/${cropName}`);
+            const detailsData = await detailsResponse.json();
+            
             setLoading(false);
-
-            if (response.ok) {
-                setRecommendedCrop(data.recommended_crop);
+            
+            if (detailsResponse.ok) {
+                setCropDetails({
+                    name: cropName,
+                    details: detailsData,
+                    imagePath: cropName.toLowerCase() === "rice" 
+                        ? riceImage 
+                        : `/api/placeholder/250/250`
+                });
+                // Trigger the animation after successful prediction with a longer delay
+                setTimeout(() => setShowResults(true), 300);
             } else {
-                setError(data.message || "Error predicting crop");
+                setError("Error fetching crop details");
             }
         } catch (err) {
             setLoading(false);
@@ -63,203 +90,421 @@ const CropPrediction = () => {
         }
     };
 
-    return (
-        <div style={styles.pageContainer}>
-            {/* Home Button */}
-            <button onClick={() => navigate("/home")} style={styles.homeButton}>
-                ⬅ Home
-            </button>
-            <motion.div
-                style={styles.container}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-            >
-                <h1 style={styles.header}>🌱 Crop Prediction</h1>
+    // Format the crop details as points
+    const formatDetailsAsPoints = (details) => {
+        if (!details || !details.description) return [];
+        
+        try {
+            const parsedData = JSON.parse(details.description);
+            let points = [];
             
-                <form style={styles.form} onSubmit={handleSubmit}>
-                    <div style={styles.row}>
-                        {["N", "P", "K"].map((key) => (
-                            <div key={key} style={styles.inputGroup}>
-                                <label style={styles.label} htmlFor={key}>
-                                    {key}:
-                                </label>
-                                <input
-                                    type="number"
-                                    id={key}
-                                    name={key}
-                                    value={formData[key]}
-                                    onChange={handleChange}
-                                    style={styles.input}
-                                    required
-                                />
-                            </div>
-                        ))}
-                    </div>
+            // Extract all points from each category
+            Object.keys(parsedData).forEach(category => {
+                const categoryData = parsedData[category];
+                
+                Object.values(categoryData).forEach(point => {
+                    points.push(point);
+                });
+            });
+            
+            return points;
+        } catch (err) {
+            console.error("Error parsing crop details:", err);
+            return ["Unable to parse crop details"];
+        }
+    };
 
-                    {["temperature", "humidity", "ph", "rainfall"].map((key) => (
-                        <div key={key} style={styles.inputGroup}>
-                            <label style={styles.label} htmlFor={key}>
-                                {key.charAt(0).toUpperCase() + key.slice(1)}:
-                            </label>
-                            <input
-                                type="number"
-                                id={key}
-                                name={key}
-                                value={formData[key]}
-                                onChange={handleChange}
-                                style={styles.input}
-                                required
-                            />
-                        </div>
-                    ))}
+    // Effect to gradually reveal the crop information points
+    useEffect(() => {
+        if (cropDetails && showResults) {
+            const points = formatDetailsAsPoints(cropDetails.details);
+            const totalPoints = points.length;
+            
+            if (totalPoints > 0) {
+                const intervalTime = 500; // Time between each point appearing
+                
+                const interval = setInterval(() => {
+                    setVisiblePoints(prev => {
+                        const newCount = prev.length + 1;
+                        if (newCount >= totalPoints) {
+                            clearInterval(interval);
+                            return points;
+                        }
+                        return points.slice(0, newCount);
+                    });
+                }, intervalTime);
+                
+                return () => clearInterval(interval);
+            }
+        }
+    }, [cropDetails, showResults]);
 
-                    <motion.button
-                        type="submit"
-                        style={styles.submitButton}
-                        disabled={loading}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        {loading ? "Predicting..." : "Predict Crop"}
-                    </motion.button>
-                </form>
-
-                {recommendedCrop && (
-                    <motion.div
-                        style={styles.resultContainer}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        <h2 style={styles.result}>🌾 Recommended Crop:</h2>
-                        <p style={styles.cropName}>{recommendedCrop}</p>
-                    </motion.div>
-                )}
-                {error && (
-                    <motion.div
-                        style={styles.errorContainer}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        <h2 style={styles.error}>⚠️ {error}</h2>
-                    </motion.div>
-                )}
+    return (
+        <div className="page-container">
+            {/* Farm Field Background Overlay */}
+            <div className="background-overlay"></div>
+            
+            {/* Animated plants */}
+            <motion.div 
+                className="plant-decoration"
+                style={{left: '5%', bottom: '10%'}}
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            >
+                🌿
             </motion.div>
+            <motion.div 
+                className="plant-decoration"
+                style={{left: '15%', bottom: '5%'}}
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            >
+                🌱
+            </motion.div>
+            <motion.div 
+                className="plant-decoration"
+                style={{right: '10%', bottom: '12%'}}
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+            >
+                🌾
+            </motion.div>
+            <motion.div 
+                className="plant-decoration"
+                style={{right: '20%', bottom: '7%'}}
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+            >
+                🍃
+            </motion.div>
+
+            {/* Home Button */}
+            <motion.button 
+                onClick={() => navigate("/home")} 
+                className="home-button"
+                whileHover={{ scale: 1.05, backgroundColor: "rgba(59, 122, 87, 0.2)" }}
+                whileTap={{ scale: 0.95 }}
+            >
+                <span className="home-icon">🏡</span> Back to Farm
+            </motion.button>
+
+            <div className="content-container">
+                {/* FarmOS Branding - Shows initially and fades out when results appear */}
+                <AnimatePresence>
+                    {!showResults && (
+                        <motion.div 
+                            className="branding-container"
+                            initial={{ opacity: 1, scale: 1 }}
+                            animate={{ opacity: showResults ? 0 : 1, scale: showResults ? 0.9 : 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.8 }}
+                        >
+                            <motion.h1 
+                                className="branding-title"
+                                initial={{ y: -20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.3, duration: 0.8 }}
+                            >
+                                <span className="brand-highlight">Farm</span>OS
+                            </motion.h1>
+                            <motion.div 
+                                className="branding-title-underline"
+                                initial={{ width: 0 }}
+                                animate={{ width: "90%" }}
+                                transition={{ delay: 0.6, duration: 1.2 }}
+                            />
+                            <motion.h2 
+                                className="branding-subtitle"
+                                initial={{ y: 20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.8, duration: 0.8 }}
+                            >
+                                Your Perfect Farming Advisor
+                            </motion.h2>
+                            <motion.p 
+                                className="branding-description"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 1.2, duration: 0.8 }}
+                            >
+                                Enter your soil and climate data to discover the ideal crop for your farm. 
+                                Our advanced algorithm analyzes your conditions to provide personalized recommendations.
+                            </motion.p>
+                            <motion.div 
+                                className="branding-icons"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 1.6, duration: 0.8 }}
+                            >
+                                <span className="icon-large">🌾</span>
+                                <span className="icon-large">🌱</span>
+                                <span className="icon-large">🌿</span>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Form Component */}
+                <motion.div
+                    className={`form-container ${showResults ? 'shifted' : ''}`}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ 
+                        opacity: 1, 
+                        y: 0
+                    }}
+                    transition={{ 
+                        duration: 0.8, 
+                        ease: "easeInOut"
+                    }}
+                >
+                    <motion.h1 
+                        className="header"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                    >
+                        🌱 Crop Advisor
+                    </motion.h1>
+                    
+                    <p className="sub-header">Enter your soil and weather conditions to find the perfect crop</p>
+                    
+                    <form className="form" onSubmit={handleSubmit}>
+                        <div className="form-section">
+                            <h3 className="section-title">🧪 Soil Nutrients (mg/kg)</h3>
+                            <div className="row">
+                                {[
+                                    { key: "N", name: "Nitrogen" },
+                                    { key: "P", name: "Phosphorus" },
+                                    { key: "K", name: "Potassium" }
+                                ].map((nutrient) => (
+                                    <div key={nutrient.key} className="input-group">
+                                        <label className="label" htmlFor={nutrient.key}>
+                                            {nutrient.name}:
+                                        </label>
+                                        <motion.input
+                                            type="number"
+                                            id={nutrient.key}
+                                            name={nutrient.key}
+                                            value={formData[nutrient.key]}
+                                            onChange={handleChange}
+                                            className="input"
+                                            required
+                                            whileFocus={{ scale: 1.03, borderColor: "#55c57a" }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="form-section">
+                            <h3 className="section-title">☁️ Environmental Factors</h3>
+                            {[
+                                { key: "temperature", name: "Temperature (°C)", icon: "🌡️" },
+                                { key: "humidity", name: "Humidity (%)", icon: "💧" },
+                                { key: "ph", name: "Soil pH", icon: "⚗️" },
+                                { key: "rainfall", name: "Annual Rainfall (mm)", icon: "🌧️" }
+                            ].map((factor, index) => (
+                                <div key={factor.key} className="input-group">
+                                    <label className="label" htmlFor={factor.key}>
+                                        {factor.icon} {factor.name}:
+                                    </label>
+                                    <motion.input
+                                        type="number"
+                                        id={factor.key}
+                                        name={factor.key}
+                                        value={formData[factor.key]}
+                                        onChange={handleChange}
+                                        className="input"
+                                        required
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.1 + index * 0.1 }}
+                                        whileFocus={{ scale: 1.03, borderColor: "#55c57a" }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        <motion.button
+                            type="submit"
+                            className="submit-button"
+                            disabled={loading}
+                            whileHover={{ scale: 1.05, backgroundColor: "#46a55e" }}
+                            whileTap={{ scale: 0.95 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.5 }}
+                        >
+                            {loading ? (
+                                <motion.div
+                                    className="loading-container"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: "100%" }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                    <span className="loading-text">Analyzing soil and climate data...</span>
+                                </motion.div>
+                            ) : (
+                                <>🔍 Find Ideal Crop</>
+                            )}
+                        </motion.button>
+                    </form>
+
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div
+                                className="error-container"
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.8, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <h2 className="error">⚠️ {error}</h2>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+
+                {/* Results Component */}
+                <AnimatePresence>
+                    {cropDetails && (
+                        <motion.div
+                            className="result-container"
+                            initial={{ opacity: 0, x: "100%" }}
+                            animate={{ 
+                                opacity: showResults ? 1 : 0, 
+                                x: showResults ? "0%" : "100%",
+                            }}
+                            exit={{ opacity: 0, x: "100%" }}
+                            transition={{ 
+                                duration: 1, 
+                                ease: "easeInOut",
+                                delay: 0.5,
+                                type: "spring", 
+                                stiffness: 80 
+                            }}
+                        >
+                            <motion.div
+                                className="result-header"
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 1.2 }}
+                            >
+                                <motion.div 
+                                    className="result-icon"
+                                    animate={{ rotate: [0, 10, -10, 0] }}
+                                    transition={{ duration: 1.5, delay: 1.5 }}
+                                >
+                                    🌾
+                                </motion.div>
+                                <h2 className="result-title">
+                                    Perfect Crop Match
+                                </h2>
+                            </motion.div>
+                            
+                            <motion.div 
+                                className="crop-name-wrapper"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 1.5, duration: 0.5 }}
+                            >
+                                <p className="crop-name">{cropDetails.name}</p>
+                                <motion.div 
+                                    className="crop-name-underline"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: "80%" }}
+                                    transition={{ delay: 1.7, duration: 0.8 }}
+                                />
+                            </motion.div>
+                            
+                            <motion.div 
+                                className="details-container"
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 1.8, duration: 0.5 }}
+                            >
+                                <motion.div 
+                                    className="image-container"
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 2.0, duration: 0.5 }}
+                                >
+                                    <img 
+                                        src={cropDetails.imagePath} 
+                                        alt={cropDetails.name}
+                                        className="crop-image"
+                                    />
+                                    <div className="image-border" />
+                                </motion.div>
+                                
+                                <div className="crop-info">
+                                    <h3 className="crop-info-title">Growing Information:</h3>
+                                    {visiblePoints.map((point, index) => (
+                                        <motion.div 
+                                            key={index} 
+                                            className="point-item"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ duration: 0.5 }}
+                                        >
+                                            <motion.span 
+                                                className="bullet-point"
+                                                initial={{ scale: 0 }}
+                                                animate={{ scale: 1 }}
+                                                transition={{ duration: 0.3 }}
+                                            >
+                                                🌱
+                                            </motion.span>
+                                            <span className="point-text">{point}</span>
+                                        </motion.div>
+                                    ))}
+                                    
+                                    {/* Display a typing indicator if there are more points to show */}
+                                    {cropDetails && showResults && visiblePoints.length < formatDetailsAsPoints(cropDetails.details).length && (
+                                        <motion.div 
+                                            className="typing-indicator"
+                                            animate={{ opacity: [0.3, 1, 0.3] }}
+                                            transition={{ duration: 1.2, repeat: Infinity }}
+                                        >
+                                            <span>•</span>
+                                            <span>•</span>
+                                            <span>•</span>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            </motion.div>
+
+                            <motion.button
+                                className="new-search-button"
+                                onClick={() => {
+                                    setShowResults(false);
+                                    setTimeout(() => {
+                                        setCropDetails(null);
+                                        setFormData({
+                                            N: "",
+                                            P: "",
+                                            K: "",
+                                            temperature: "",
+                                            humidity: "",
+                                            ph: "",
+                                            rainfall: "",
+                                        });
+                                    }, 800);
+                                }}
+                                whileHover={{ scale: 1.05, backgroundColor: "rgba(59, 122, 87, 0.2)" }}
+                                whileTap={{ scale: 0.95 }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 2.5 }}
+                            >
+                                🔄 Try Another Analysis
+                            </motion.button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
-};
-
-const styles = {
-    pageContainer: {
-        height: "100vh",
-        width: "100vw",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#1a1a1a", // Dark grayish-black background
-        color: "#ff7b42",
-    },
-    container: {
-        width: "500px",
-        padding: "30px",
-        borderRadius: "12px",
-        boxShadow: "0px 10px 20px #ff7b42",
-        textAlign: "center",
-        backgroundColor: "#222", // Slightly lighter grayish-black
-    },
-    header: {
-        fontSize: "22px",
-        fontWeight: "bold",
-        color: "#ff7b42",
-        marginBottom: "15px",
-    },
-    form: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "15px",
-    },
-    row: {
-        display: "flex",
-        justifyContent: "space-between",
-        gap: "10px",
-    },
-    inputGroup: {
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        width: "100%",
-    },
-    label: {
-        fontWeight: "600",
-        color: "#ff7b42",
-        marginBottom: "5px",
-    },
-    homeButton: {
-        position: "absolute",
-        top: "20px",
-        left: "20px",
-        padding: "10px 15px",
-        fontSize: "14px",
-        fontWeight: "bold",
-        color: "#ff7b42",
-        backgroundColor: "transparent",
-        border: "2px solid #ff7b42",
-        borderRadius: "5px",
-        cursor: "pointer",
-        transition: "background 0.3s, color 0.3s",
-    },
-    input: {
-        width: "90%",
-        padding: "8px",
-        borderRadius: "6px",
-        border: "1px solid #ff7b42",
-        fontSize: "14px",
-        backgroundColor: "rgba(0, 0, 0, 0.6)",
-        color: "#ff7b42",
-        transition: "border-color 0.3s, transform 0.3s",
-        boxSizing: "border-box",
-    },
-    submitButton: {
-        width: "100%",
-        padding: "12px",
-        fontSize: "16px",
-        fontWeight: "bold",
-        color: "#000",
-        backgroundColor: "#ff7b42",
-        border: "none",
-        borderRadius: "6px",
-        cursor: "pointer",
-        transition: "background 0.3s, transform 0.3s",
-    },
-    resultContainer: {
-        marginTop: "20px",
-        padding: "15px",
-        backgroundColor: "rgba(0, 255, 0, 0.1)",
-        borderRadius: "8px",
-        textAlign: "center",
-    },
-    result: {
-        color: "#ff7b42",
-        fontWeight: "bold",
-    },
-    cropName: {
-        fontSize: "20px",
-        fontWeight: "bold",
-        color: "#ff7b42",
-    },
-    errorContainer: {
-        marginTop: "20px",
-        padding: "15px",
-        backgroundColor: "#ff000033",
-        borderRadius: "8px",
-        textAlign: "center",
-    },
-    error: {
-        color: "#ff4444",
-        fontWeight: "bold",
-    },
 };
 
 export default CropPrediction;
