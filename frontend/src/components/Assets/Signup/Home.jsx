@@ -1,113 +1,79 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import './Home.css'; // Import the CSS file
+import bgvideo from '../videos/homevideo.mp4';
 
 const Home = () => {
     const navigate = useNavigate();
-
+    
     const handleLogout = () => {
         alert('Logged Out Successfully!');
-        navigate('/login');
+        navigate('/Signup');
     };
-
+    
     const handleCropPrediction = () => {
         navigate('/crop-prediction');
     };
-
+    
     const handleDiseaseDetection = () => {
         window.location.href = 'http://localhost:8501';
     };
     
-
     return (
-        <div style={styles.pageContainer}>
-            <div style={styles.background}></div> {/* Blurred background */}
-            <button style={styles.logoutButton} onClick={handleLogout}>
-                Logout
+        <div className="page-container">
+            <div className="background-overlay">
+            <video autoPlay muted loop className="background-video">
+                <source src="/homevideo.mp4" type="video/mp4" />
+            </video>
+            </div>
+            
+            {/* Plant decorations */}
+            <div className="plant-decoration" style={{ top: '10%', left: '5%' }}>🌱</div>
+            <div className="plant-decoration" style={{ bottom: '15%', right: '8%' }}>🌿</div>
+            <div className="plant-decoration" style={{ top: '20%', right: '10%' }}>🍃</div>
+            
+            <button className="home-button" onClick={handleLogout}>
+                <span className="button-icon">➤</span> Logout
             </button>
-            <div style={styles.content}>
-                <h1 style={styles.header}>FarmOS Home Page</h1>
-                <p style={styles.description}>Choose one of the following options:</p>
-                <div style={styles.buttonContainer}>
-                    <button style={styles.orangeButton} onClick={handleCropPrediction}>
-                        Crop Prediction
-                    </button>
-                    <button style={styles.orangeButton} onClick={handleDiseaseDetection}>
-                        Disease Detection
-                    </button>
+            
+            <div className="content-container">
+                <div className="branding-container">
+                    <h1 className="branding-title">Farm<span className="brand-highlight">OS</span></h1>
+                    <div className="branding-title-underline" style={{ width: '80px' }}></div>
+                    <h2 className="branding-subtitle">Smart Agriculture Solutions</h2>
+                    <p className="branding-description">
+                        Empowering farmers with intelligent data-driven insights for sustainable and efficient farming practices.
+                    </p>
+                    <div className="branding-icons">
+                        <span className="icon-large">🌾</span>
+                        <span className="icon-large">🌱</span>
+                        <span className="icon-large">🌿</span>
+                    </div>
+                </div>
+                
+                <div className="form-container">
+                    <h1 className="header">Welcome to FarmOS</h1>
+                    <p className="sub-header">Choose one of the following options:</p>
+                    
+                    <div className="form">
+                        <button 
+                            className="submit-button crop-button"
+                            onClick={handleCropPrediction}
+                        >
+                            <span className="button-icon">🌾</span> Crop Prediction
+                        </button>
+                        
+                        <button 
+                            className="submit-button disease-button"
+                            onClick={handleDiseaseDetection}
+                        >
+                            <span className="button-icon">🔍</span> Disease Detection
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     );
-};
-
-const styles = {
-    pageContainer: {
-        position: 'relative',
-        height: '100vh',
-        width: '100vw',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'hidden',
-    },
-    background: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundImage: `url('/images/wheat.jpg')`, // Background image from public folder
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        filter: 'blur(5px)', // Blurring the background only
-        zIndex: -1, // Keeps it behind other elements
-    },
-    logoutButton: {
-        position: 'absolute',
-        top: '20px',
-        left: '20px',
-        backgroundColor: 'orange',
-        color: 'white',
-        border: 'none',
-        padding: '10px 20px',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        fontWeight: 'bold',
-        zIndex: 10, // Ensures it stays above everything
-    },
-    content: {
-        background: 'white',
-        padding: '40px',
-        borderRadius: '12px',
-        boxShadow: '0px 5px 15px rgba(0, 0, 0, 0.2)',
-        textAlign: 'center',
-        position: 'relative',
-        zIndex: 1, // Ensures the content is above the background
-    },
-    header: {
-        fontSize: '2rem',
-        color: '#333',
-    },
-    description: {
-        fontSize: '1.2rem',
-        margin: '20px 0',
-    },
-    buttonContainer: {
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '20px',
-        marginTop: '20px',
-    },
-    orangeButton: {
-        backgroundColor: 'orange',
-        color: 'white',
-        border: 'none',
-        padding: '15px 30px',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        fontSize: '1rem',
-        fontWeight: 'bold',
-    },
 };
 
 export default Home;

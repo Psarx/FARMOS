@@ -26,6 +26,7 @@ import Home from './components/Assets/Signup/Home';
 import CropPrediction from './components/Assets/Signup/CropPrediction';
 import DiseaseDetection from './components/Assets/Signup/DiseaseDetection';
 import Login from './components/Assets/Signup/Login';
+import Signup from './components/Assets/Signup/Login';
 
 const App = () => {
     return (
@@ -36,6 +37,7 @@ const App = () => {
                 <Route path="/home" element={<Home />} />
                 <Route path="/crop-prediction" element={<CropPrediction />} />
                 <Route path="/disease-detection" element={<DiseaseDetection />} />
+                <Route path="/login" element={<Signup />} />
             </Routes>
         </Router>
     );

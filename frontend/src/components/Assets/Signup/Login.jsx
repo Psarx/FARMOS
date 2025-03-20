@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './Signup.css';
-import wheatImage from '../../Assets/Images/wheat.jpg'; // Corrected image path
+import wheatImage from '../../Assets/Images/wheat.jpg';
 
 const Signup = () => {
   const [username, setUsername] = useState('');
@@ -17,7 +17,7 @@ const Signup = () => {
     try {
       await axios.post(`http://localhost:5001/api/auth/${endpoint}`, { username, email, password });
       alert(`${action} successful!`);
-      navigate('/home'); // Redirect after success
+      navigate('/home');
     } catch (error) {
       alert(`${action} failed: ${error.response?.data?.message || error.message}`);
     }
@@ -28,7 +28,7 @@ const Signup = () => {
       <div className="main-container1">
         <div className="left-section">
           <div className="header">
-            <div className="text">{action}</div>
+            <div className="text">{action} to <span className="brand-name">FarmOS</span></div>
             <div className="underline"></div>
           </div>
           <form onSubmit={handleSubmit} className="inputs">
@@ -61,10 +61,10 @@ const Signup = () => {
                 required
               />
             </div>
-            <button type="submit" className="orange-button">{action}</button>
+            <button type="submit" className="submit-button">{action}</button>
           </form>
           <button
-            className="orange-button action-button"
+            className="toggle-button"
             onClick={() => setAction(action === 'Sign Up' ? 'Login' : 'Sign Up')}
           >
             {action === 'Sign Up' ? 'Login' : 'Sign Up'}
