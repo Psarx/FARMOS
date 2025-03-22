@@ -7,8 +7,8 @@ const Home = () => {
     const navigate = useNavigate();
     
     const handleLogout = () => {
-        alert('Logged Out Successfully!');
-        navigate('/Signup');
+        /*alert('Logged Out Successfully!'); */
+        navigate('/login');
     };
     
     const handleCropPrediction = () => {

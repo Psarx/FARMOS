@@ -74,7 +74,7 @@
     border-radius: 10px;
     background-color: #ffffff;
     color: #346345;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    /* transition: border-color 0.3s ease, box-shadow 0.3s ease; */
     outline: none;
     box-shadow: 0 4px 8px rgba(73, 143, 93, 0.1); /* Subtle shadow for depth */
   }

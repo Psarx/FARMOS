@@ -295,14 +295,14 @@
     margin-bottom: 25px;
 }
 
-.crop-name {
+/* .crop-name {
     font-size: 26px;
     font-weight: bold;
     color: #55c57a;
     margin: 5px 0;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-}
+} */
 
 .crop-name-underline {
     height: 3px;
@@ -376,17 +376,7 @@
     border: 1px solid rgba(73, 143, 93, 0.1);
 }
 
-.bullet-point {
-    color: #55c57a;
-    font-size: 18px;
-    line-height: 24px;
-}
 
-.point-text {
-    color: #333;
-    font-size: 15px;
-    line-height: 1.6;
-}
 
 .error-container {
     margin-top: 20px;
@@ -425,4 +415,58 @@
     cursor: pointer;
     display: flex;
     align-items: center;
+}
+
+/* This is a suggested update to your CSS file to accommodate the new layout without the image */
+.crop-info.full-width {
+    width: 100%;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Styling for the scrollbar in the farming guide */
+.crop-info.full-width::-webkit-scrollbar {
+    width: 8px;
+}
+
+.crop-info.full-width::-webkit-scrollbar-track {
+    background: rgba(220, 233, 226, 0.5);
+    border-radius: 10px;
+}
+
+.crop-info.full-width::-webkit-scrollbar-thumb {
+    background-color: rgba(85, 197, 122, 0.7);
+    border-radius: 10px;
+}
+
+/* Make point items more readable */
+.point-item {
+    margin-bottom: 12px;
+    line-height: 1.5;
+    display: flex;
+    align-items: flex-start;
+}
+
+.bullet-point {
+    margin-right: 8px;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.point-text {
+    font-size: 15px;
+    color: #333;
+}
+
+/* Adjust the crop name to be more prominent */
+.crop-name {
+    font-size: 32px;
+    font-weight: 600;
+    color: #2e7d32;
+    text-transform: capitalize;
+    margin-bottom: 5px;
 }

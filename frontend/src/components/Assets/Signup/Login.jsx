@@ -16,7 +16,7 @@ const Signup = () => {
     const endpoint = action === 'Sign Up' ? 'register' : 'login';
     try {
       await axios.post(`http://localhost:5001/api/auth/${endpoint}`, { username, email, password });
-      alert(`${action} successful!`);
+      // alert(`${action} successful!`);
       navigate('/home');
     } catch (error) {
       alert(`${action} failed: ${error.response?.data?.message || error.message}`);

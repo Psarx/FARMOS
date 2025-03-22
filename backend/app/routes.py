@@ -3,10 +3,20 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import joblib
 import pandas as pd
+import os
+import requests
+from dotenv import load_dotenv
 from .models import User, db, Crop  # Import the Crop model
 
 auth_routes = Blueprint("auth_routes", __name__)
 CORS(auth_routes, origins=["http://localhost:5000"])
+
+# Load Hugging Face API Key from .env
+load_dotenv()
+HF_API_KEY = os.getenv("HF_API_KEY")
+HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
+
+HEADERS = {"Authorization": f"Bearer {HF_API_KEY}"}
 
 # Load the trained model, label encoder, and scaler
 model = joblib.load('models/saved_models/crop_recommendation_model.pkl')
@@ -79,7 +89,7 @@ def logout():
     session.clear()
     return jsonify({"message": "Logged out successfully"}), 200
 
-# Crop Recommendation
+# Crop Recommendation + AI Roadmap Generation
 @auth_routes.route('/predict', methods=['POST'])
 def predict():
     data = request.json
@@ -89,14 +99,54 @@ def predict():
 
         features_scaled = scaler.transform(input_data)
         prediction = model.predict(features_scaled)
-        crop = label_encoder.inverse_transform(prediction)
+        recommended_crop = label_encoder.inverse_transform(prediction)[0]
 
-        return jsonify({'recommended_crop': crop[0]}), 200
+        # Generate AI Roadmap
+        farming_guide = generate_farming_guide(recommended_crop, data)
+
+        return jsonify({
+            'recommended_crop': recommended_crop,
+            'farming_guide': farming_guide
+        }), 200
+
     except KeyError as e:
         return jsonify({"message": f"Missing parameter: {str(e)}"}), 400
     except Exception as e:
         return jsonify({"message": "An error occurred during prediction", "error": str(e)}), 500
 
+# Generate Farming Guide using Mistral AI
+def generate_farming_guide(crop, soil_data):
+    prompt = f"""
+    I am a beginner farmer looking to grow {crop}. My soil conditions are:
+    - Nitrogen: {soil_data['N']} mg/kg
+    - Phosphorus: {soil_data['P']} mg/kg
+    - Potassium: {soil_data['K']} mg/kg
+    - Temperature: {soil_data['temperature']}°C
+    - Humidity: {soil_data['humidity']}%
+    - pH: {soil_data['ph']}
+    - Rainfall: {soil_data['rainfall']} mm
+
+    Can you provide a **clear, step-by-step** guide to growing {crop} successfully?  
+    Please include:
+    - Soil preparation  
+    - Planting methods  
+    - Watering schedule  
+    - Fertilization guide  
+    - Pest control  
+    - Harvesting techniques  
+    - Storage and market value  
+
+    Please respond **directly with the guide**, without repeating this prompt.  
+    """
+
+    payload = {"inputs": prompt}
+    response = requests.post(HF_API_URL, headers=HEADERS, json=payload)
+
+    if response.status_code == 200:
+        return response.json()[0]['generated_text']
+    else:
+        return f"Error: {response.json()}"
+    
 # Add Crop to Database
 @auth_routes.route('/add_crop', methods=['POST'])
 def add_crop():
@@ -121,7 +171,7 @@ def add_crop():
         db.session.rollback()
         return jsonify({"message": "An error occurred while adding the crop", "error": str(e)}), 500
 
-
+# Get Crop Details
 @auth_routes.route('/get_crop/<string:name>', methods=['GET'])
 def get_crop(name):
     try:

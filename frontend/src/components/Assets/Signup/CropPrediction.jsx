@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import riceImage from '../Images/rice.png';
 import "./CropPrediction.css";
 
 const CropPrediction = () => {
@@ -38,8 +37,8 @@ const CropPrediction = () => {
         setVisiblePoints([]);
 
         try {
-            // First, get the prediction from the predict endpoint
-            const predictResponse = await fetch("http://localhost:5000/api/auth/predict", {
+            // Get the prediction from the Hugging Face integration
+            const predictResponse = await fetch("http://localhost:5001/api/auth/predict", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -63,61 +62,57 @@ const CropPrediction = () => {
                 return;
             }
             
-            const cropName = predictData.recommended_crop;
-            
-            // Now fetch the crop details using the cropName
-            const detailsResponse = await fetch(`http://localhost:5000/api/auth/get_crop/${cropName}`);
-            const detailsData = await detailsResponse.json();
-            
             setLoading(false);
             
-            if (detailsResponse.ok) {
-                setCropDetails({
-                    name: cropName,
-                    details: detailsData,
-                    imagePath: cropName.toLowerCase() === "rice" 
-                        ? riceImage 
-                        : `/api/placeholder/250/250`
-                });
-                // Trigger the animation after successful prediction with a longer delay
-                setTimeout(() => setShowResults(true), 300);
-            } else {
-                setError("Error fetching crop details");
-            }
+            // Set the new format data directly
+            setCropDetails({
+                name: predictData.recommended_crop,
+                farmingGuide: predictData.farming_guide
+            });
+            
+            // Trigger the animation after successful prediction
+            setTimeout(() => setShowResults(true), 300);
         } catch (err) {
             setLoading(false);
             setError("Failed to connect to the backend");
         }
     };
 
-    // Format the crop details as points
-    const formatDetailsAsPoints = (details) => {
-        if (!details || !details.description) return [];
+    // Format the farming guide as points
+    const formatGuideAsPoints = (guide) => {
+        if (!guide) return [];
         
-        try {
-            const parsedData = JSON.parse(details.description);
-            let points = [];
+        // Split by newlines and filter out empty strings
+        const lines = guide.split('\n').filter(line => line.trim().length > 0);
+        
+        // Filter out lines that look like headers or section titles
+        const contentLines = lines.filter(line => {
+            // Filter out the prompt part
+            if (line.includes("I am a beginner farmer") || 
+                line.includes("Can you provide") ||
+                line.includes("Please include") ||
+                line.includes("Please respond") ||
+                line.includes("User 0:") ||
+                line.includes("-------------------------")) {
+                return false;
+            }
+            return true;
+        });
+        
+        // Join remaining lines and split by sentences for better readability
+        const sentences = contentLines.join(' ')
+            .split('.')
+            .map(s => s.trim())
+            .filter(s => s.length > 0)
+            .map(s => s + '.');
             
-            // Extract all points from each category
-            Object.keys(parsedData).forEach(category => {
-                const categoryData = parsedData[category];
-                
-                Object.values(categoryData).forEach(point => {
-                    points.push(point);
-                });
-            });
-            
-            return points;
-        } catch (err) {
-            console.error("Error parsing crop details:", err);
-            return ["Unable to parse crop details"];
-        }
+        return sentences;
     };
 
     // Effect to gradually reveal the crop information points
     useEffect(() => {
         if (cropDetails && showResults) {
-            const points = formatDetailsAsPoints(cropDetails.details);
+            const points = formatGuideAsPoints(cropDetails.farmingGuide);
             const totalPoints = points.length;
             
             if (totalPoints > 0) {
@@ -423,22 +418,8 @@ const CropPrediction = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 1.8, duration: 0.5 }}
                             >
-                                <motion.div 
-                                    className="image-container"
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 2.0, duration: 0.5 }}
-                                >
-                                    <img 
-                                        src={cropDetails.imagePath} 
-                                        alt={cropDetails.name}
-                                        className="crop-image"
-                                    />
-                                    <div className="image-border" />
-                                </motion.div>
-                                
-                                <div className="crop-info">
-                                    <h3 className="crop-info-title">Growing Information:</h3>
+                                <div className="crop-info full-width">
+                                    <h3 className="crop-info-title">Farming Guide:</h3>
                                     {visiblePoints.map((point, index) => (
                                         <motion.div 
                                             key={index} 
@@ -460,7 +441,7 @@ const CropPrediction = () => {
                                     ))}
                                     
                                     {/* Display a typing indicator if there are more points to show */}
-                                    {cropDetails && showResults && visiblePoints.length < formatDetailsAsPoints(cropDetails.details).length && (
+                                    {cropDetails && showResults && visiblePoints.length < formatGuideAsPoints(cropDetails.farmingGuide).length && (
                                         <motion.div 
                                             className="typing-indicator"
                                             animate={{ opacity: [0.3, 1, 0.3] }}
