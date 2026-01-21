@@ -2,3 +2,10 @@
 # .gitignore
 .env
 venv/
+
+# Dependencies
+node_modules/
+*.pyc
+__pycache__/
+*.h5
+.cache/

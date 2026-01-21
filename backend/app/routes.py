@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, send_from_directory, session, current_app
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
 import joblib
 import pandas as pd
 import os
@@ -9,7 +10,7 @@ from dotenv import load_dotenv
 from .models import User, db, Crop  # Import the Crop model
 
 auth_routes = Blueprint("auth_routes", __name__)
-CORS(auth_routes, origins=["http://localhost:5000"])
+CORS(auth_routes, origins=["http://localhost:3000", "http://localhost:5000"])
 
 # Load Hugging Face API Key from .env
 load_dotenv()
@@ -18,10 +19,13 @@ HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-I
 
 HEADERS = {"Authorization": f"Bearer {HF_API_KEY}"}
 
+# Get the base directory of the backend
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 # Load the trained model, label encoder, and scaler
-model = joblib.load('models/saved_models/crop_recommendation_model.pkl')
-label_encoder = joblib.load('models/saved_models/label_encoder.pkl')
-scaler = joblib.load('models/saved_models/scaler.pkl')
+model = joblib.load(os.path.join(BASE_DIR, 'models/saved_models/crop_recommendation_model.pkl'))
+label_encoder = joblib.load(os.path.join(BASE_DIR, 'models/saved_models/label_encoder.pkl'))
+scaler = joblib.load(os.path.join(BASE_DIR, 'models/saved_models/scaler.pkl'))
 
 @auth_routes.route('/', methods=['GET'])
 def home():
@@ -76,7 +80,20 @@ def login():
     if not user:
         return jsonify({"message": "User not found"}), 404
 
-    if check_password_hash(user.password_hash, password):
+    # Check if password hash is bcrypt format (starts with $2a$, $2b$, $2y$)
+    is_valid = False
+    if user.password_hash and user.password_hash.startswith('$2'):
+        # Use bcrypt for verification
+        try:
+            is_valid = bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8'))
+        except Exception as e:
+            current_app.logger.error(f"Bcrypt verification error: {str(e)}")
+            is_valid = False
+    else:
+        # Use werkzeug for verification (for newly registered users)
+        is_valid = check_password_hash(user.password_hash, password)
+    
+    if is_valid:
         session['user_id'] = user.id
         session['username'] = user.username
         return jsonify({"message": "Login successful", "user": {"id": user.id, "username": user.username}}), 200
