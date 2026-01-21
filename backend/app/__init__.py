@@ -23,6 +23,22 @@ def create_app():
     # Database Configuration from .env
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://MainProject_owner:Q89rbOjImFDi@ep-rough-water-a5q7g77n.us-east-2.aws.neon.tech/MainProject?sslmode=require'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    # Connection pool settings to handle Neon's serverless nature
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_size': 10,              # Number of connections to keep open
+        'pool_recycle': 300,          # Recycle connections after 5 minutes
+        'pool_pre_ping': True,        # Test connections before using them
+        'max_overflow': 20,           # Maximum overflow connections
+        'pool_timeout': 30,           # Timeout for getting a connection
+        'connect_args': {
+            'connect_timeout': 10,    # Connection timeout
+            'keepalives': 1,
+            'keepalives_idle': 30,
+            'keepalives_interval': 10,
+            'keepalives_count': 5,
+        }
+    }
 
     # JWT Secret and Salt Rounds for hashing (Optional, if used in your app)
     app.config['JWT_SECRET'] = os.getenv('JWT_SECRET')

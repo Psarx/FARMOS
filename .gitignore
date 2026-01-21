@@ -2,9 +2,9 @@
 # .gitignore
 .env
 venv/
-frontend/node_modules
-# Dependencies
 node_modules/
+frontend/node_modules/
+# Dependencies
 *.pyc
 __pycache__/
 *.h5
