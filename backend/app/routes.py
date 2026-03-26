@@ -7,6 +7,7 @@ import pandas as pd
 import os
 import requests
 from dotenv import load_dotenv
+from huggingface_hub import InferenceClient
 from .models import User, db, Crop  # Import the Crop model
 
 auth_routes = Blueprint("auth_routes", __name__)
@@ -15,9 +16,8 @@ CORS(auth_routes, origins=["http://localhost:3000", "http://localhost:5000"])
 # Load Hugging Face API Key from .env
 load_dotenv()
 HF_API_KEY = os.getenv("HF_API_KEY")
-HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
-
-HEADERS = {"Authorization": f"Bearer {HF_API_KEY}"}
+HF_MODEL = "Qwen/Qwen2.5-72B-Instruct"
+hf_client = InferenceClient(token=HF_API_KEY)
 
 # Get the base directory of the backend
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -109,7 +109,8 @@ def logout():
 # Crop Recommendation + AI Roadmap Generation
 @auth_routes.route('/predict', methods=['POST'])
 def predict():
-    data = request.json
+    data = request.get_json() or {}
+    current_app.logger.debug(f"Received /predict payload: {data}")
     try:
         input_data = pd.DataFrame([[data['N'], data['P'], data['K'], data['temperature'], data['humidity'], data['ph'], data['rainfall']]],
                                   columns=['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall'])
@@ -127,42 +128,36 @@ def predict():
         }), 200
 
     except KeyError as e:
+        current_app.logger.error(f"Predict KeyError: {e}", exc_info=True)
         return jsonify({"message": f"Missing parameter: {str(e)}"}), 400
     except Exception as e:
+        current_app.logger.error("Predict Exception", exc_info=True)
         return jsonify({"message": "An error occurred during prediction", "error": str(e)}), 500
 
 # Generate Farming Guide using Mistral AI
 def generate_farming_guide(crop, soil_data):
-    prompt = f"""
-    I am a beginner farmer looking to grow {crop}. My soil conditions are:
-    - Nitrogen: {soil_data['N']} mg/kg
-    - Phosphorus: {soil_data['P']} mg/kg
-    - Potassium: {soil_data['K']} mg/kg
-    - Temperature: {soil_data['temperature']}°C
-    - Humidity: {soil_data['humidity']}%
-    - pH: {soil_data['ph']}
-    - Rainfall: {soil_data['rainfall']} mm
+    prompt = (
+        f"I am a beginner farmer looking to grow {crop}. My soil conditions are: "
+        f"Nitrogen: {soil_data['N']} mg/kg, Phosphorus: {soil_data['P']} mg/kg, "
+        f"Potassium: {soil_data['K']} mg/kg, Temperature: {soil_data['temperature']}°C, "
+        f"Humidity: {soil_data['humidity']}%, pH: {soil_data['ph']}, "
+        f"Rainfall: {soil_data['rainfall']} mm.\n\n"
+        f"Provide a clear, step-by-step guide to growing {crop} successfully. "
+        f"Include: Soil preparation, Planting methods, Watering schedule, "
+        f"Fertilization guide, Pest control, Harvesting techniques, "
+        f"Storage and market value. Respond directly with the guide."
+    )
 
-    Can you provide a **clear, step-by-step** guide to growing {crop} successfully?  
-    Please include:
-    - Soil preparation  
-    - Planting methods  
-    - Watering schedule  
-    - Fertilization guide  
-    - Pest control  
-    - Harvesting techniques  
-    - Storage and market value  
-
-    Please respond **directly with the guide**, without repeating this prompt.  
-    """
-
-    payload = {"inputs": prompt}
-    response = requests.post(HF_API_URL, headers=HEADERS, json=payload)
-
-    if response.status_code == 200:
-        return response.json()[0]['generated_text']
-    else:
-        return f"Error: {response.json()}"
+    try:
+        response = hf_client.chat_completion(
+            model=HF_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1024,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        current_app.logger.error(f"HF API error: {e}", exc_info=True)
+        return f"Error generating farming guide: {str(e)}"
     
 # Add Crop to Database
 @auth_routes.route('/add_crop', methods=['POST'])

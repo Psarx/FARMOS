@@ -1,7 +1,77 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import "./CropPrediction.css";
+
+const SECTION_ICONS = {
+    'soil': '🌍',
+    'planting': '🌱',
+    'water': '💧',
+    'fertiliz': '🧪',
+    'pest': '🛡️',
+    'harvest': '🌾',
+    'storage': '📦',
+    'market': '💰',
+    'default': '📋',
+};
+
+function getSectionIcon(title) {
+    const lower = title.toLowerCase();
+    for (const [key, icon] of Object.entries(SECTION_ICONS)) {
+        if (lower.includes(key)) return icon;
+    }
+    return SECTION_ICONS.default;
+}
+
+/** Parse markdown-style guide text into structured sections */
+function parseGuide(text) {
+    if (!text) return [];
+    const sections = [];
+    let current = null;
+
+    for (const raw of text.split('\n')) {
+        const line = raw.trimEnd();
+        // Match ### or #### headings
+        const headingMatch = line.match(/^#{2,4}\s+(?:\d+\.\s*)?(.+)/);
+        if (headingMatch) {
+            if (current) sections.push(current);
+            current = { title: headingMatch[1].trim(), items: [] };
+            continue;
+        }
+        // Match numbered heading like "1. Soil Preparation"
+        const numberedHeading = line.match(/^\d+\.\s+\*\*(.+?)\*\*/);
+        if (numberedHeading && (!current || current.items.length > 0)) {
+            if (current) sections.push(current);
+            current = { title: numberedHeading[1].trim(), items: [] };
+            continue;
+        }
+        if (!current) {
+            current = { title: 'Overview', items: [] };
+        }
+        // Match list items  (- or *)
+        const listMatch = line.match(/^\s*[-*]\s+(.+)/);
+        if (listMatch) {
+            current.items.push(listMatch[1].trim());
+        } else if (line.trim().length > 0) {
+            current.items.push(line.trim());
+        }
+    }
+    if (current && (current.items.length > 0 || current.title !== 'Overview')) {
+        sections.push(current);
+    }
+    return sections;
+}
+
+/** Render inline markdown bold **text** */
+function renderInlineMarkdown(text) {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={i}>{part.slice(2, -2)}</strong>;
+        }
+        return part;
+    });
+}
 
 const CropPrediction = () => {
     const [formData, setFormData] = useState({
@@ -19,7 +89,6 @@ const CropPrediction = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showResults, setShowResults] = useState(false);
-    const [visiblePoints, setVisiblePoints] = useState([]);
 
     const handleChange = (e) => {
         setFormData({
@@ -34,7 +103,6 @@ const CropPrediction = () => {
         setError(null);
         setLoading(true);
         setShowResults(false);
-        setVisiblePoints([]);
 
         try {
             // Get the prediction from the Hugging Face integration
@@ -78,61 +146,30 @@ const CropPrediction = () => {
         }
     };
 
-    // Format the farming guide as points
-    const formatGuideAsPoints = (guide) => {
-        if (!guide) return [];
-        
-        // Split by newlines and filter out empty strings
-        const lines = guide.split('\n').filter(line => line.trim().length > 0);
-        
-        // Filter out lines that look like headers or section titles
-        const contentLines = lines.filter(line => {
-            // Filter out the prompt part
-            if (line.includes("I am a beginner farmer") || 
-                line.includes("Can you provide") ||
-                line.includes("Please include") ||
-                line.includes("Please respond") ||
-                line.includes("User 0:") ||
-                line.includes("-------------------------")) {
-                return false;
-            }
-            return true;
-        });
-        
-        // Join remaining lines and split by sentences for better readability
-        const sentences = contentLines.join(' ')
-            .split('.')
-            .map(s => s.trim())
-            .filter(s => s.length > 0)
-            .map(s => s + '.');
-            
-        return sentences;
-    };
+    // Parse guide into structured sections
+    const guideSections = useMemo(
+        () => parseGuide(cropDetails?.farmingGuide),
+        [cropDetails?.farmingGuide]
+    );
 
-    // Effect to gradually reveal the crop information points
+    // Gradually reveal sections
+    const [visibleSections, setVisibleSections] = useState(0);
+
     useEffect(() => {
-        if (cropDetails && showResults) {
-            const points = formatGuideAsPoints(cropDetails.farmingGuide);
-            const totalPoints = points.length;
-            
-            if (totalPoints > 0) {
-                const intervalTime = 500; // Time between each point appearing
-                
-                const interval = setInterval(() => {
-                    setVisiblePoints(prev => {
-                        const newCount = prev.length + 1;
-                        if (newCount >= totalPoints) {
-                            clearInterval(interval);
-                            return points;
-                        }
-                        return points.slice(0, newCount);
-                    });
-                }, intervalTime);
-                
-                return () => clearInterval(interval);
-            }
+        if (cropDetails && showResults && guideSections.length > 0) {
+            setVisibleSections(0);
+            const interval = setInterval(() => {
+                setVisibleSections(prev => {
+                    if (prev >= guideSections.length) {
+                        clearInterval(interval);
+                        return prev;
+                    }
+                    return prev + 1;
+                });
+            }, 300);
+            return () => clearInterval(interval);
         }
-    }, [cropDetails, showResults]);
+    }, [cropDetails, showResults, guideSections.length]);
 
     return (
         <div className="page-container">
@@ -379,86 +416,73 @@ const CropPrediction = () => {
                                 stiffness: 80 
                             }}
                         >
+                            {/* Crop Name Hero */}
                             <motion.div
-                                className="result-header"
+                                className="result-hero"
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 1.2 }}
+                                transition={{ delay: 1.0 }}
                             >
+                                <div className="result-hero-badge">
+                                    <span className="result-hero-icon">🌾</span>
+                                    <span className="result-hero-label">Recommended Crop</span>
+                                </div>
+                                <h2 className="result-hero-crop">{cropDetails.name}</h2>
                                 <motion.div 
-                                    className="result-icon"
-                                    animate={{ rotate: [0, 10, -10, 0] }}
-                                    transition={{ duration: 1.5, delay: 1.5 }}
-                                >
-                                    🌾
-                                </motion.div>
-                                <h2 className="result-title">
-                                    Perfect Crop Match
-                                </h2>
-                            </motion.div>
-                            
-                            <motion.div 
-                                className="crop-name-wrapper"
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 1.5, duration: 0.5 }}
-                            >
-                                <p className="crop-name">{cropDetails.name}</p>
-                                <motion.div 
-                                    className="crop-name-underline"
+                                    className="result-hero-line"
                                     initial={{ width: 0 }}
-                                    animate={{ width: "80%" }}
-                                    transition={{ delay: 1.7, duration: 0.8 }}
+                                    animate={{ width: "60%" }}
+                                    transition={{ delay: 1.3, duration: 0.8 }}
                                 />
                             </motion.div>
-                            
-                            <motion.div 
-                                className="details-container"
-                                initial={{ opacity: 0, y: 30 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 1.8, duration: 0.5 }}
-                            >
-                                <div className="crop-info full-width">
-                                    <h3 className="crop-info-title">Farming Guide:</h3>
-                                    {visiblePoints.map((point, index) => (
-                                        <motion.div 
-                                            key={index} 
-                                            className="point-item"
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ duration: 0.5 }}
-                                        >
-                                            <motion.span 
-                                                className="bullet-point"
-                                                initial={{ scale: 0 }}
-                                                animate={{ scale: 1 }}
-                                                transition={{ duration: 0.3 }}
-                                            >
-                                                🌱
-                                            </motion.span>
-                                            <span className="point-text">{point}</span>
-                                        </motion.div>
-                                    ))}
-                                    
-                                    {/* Display a typing indicator if there are more points to show */}
-                                    {cropDetails && showResults && visiblePoints.length < formatGuideAsPoints(cropDetails.farmingGuide).length && (
-                                        <motion.div 
-                                            className="typing-indicator"
-                                            animate={{ opacity: [0.3, 1, 0.3] }}
-                                            transition={{ duration: 1.2, repeat: Infinity }}
-                                        >
-                                            <span>•</span>
-                                            <span>•</span>
-                                            <span>•</span>
-                                        </motion.div>
-                                    )}
-                                </div>
-                            </motion.div>
+
+                            {/* Guide Sections */}
+                            <div className="guide-sections">
+                                {guideSections.slice(0, visibleSections).map((section, sIdx) => (
+                                    <motion.div
+                                        key={sIdx}
+                                        className="guide-card"
+                                        initial={{ opacity: 0, y: 24 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.45 }}
+                                    >
+                                        <div className="guide-card-header">
+                                            <span className="guide-card-icon">{getSectionIcon(section.title)}</span>
+                                            <h3 className="guide-card-title">{section.title}</h3>
+                                        </div>
+                                        <ul className="guide-card-list">
+                                            {section.items.map((item, iIdx) => (
+                                                <motion.li
+                                                    key={iIdx}
+                                                    className="guide-card-item"
+                                                    initial={{ opacity: 0, x: 12 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: iIdx * 0.05 }}
+                                                >
+                                                    {renderInlineMarkdown(item)}
+                                                </motion.li>
+                                            ))}
+                                        </ul>
+                                    </motion.div>
+                                ))}
+
+                                {/* Loading indicator for remaining sections */}
+                                {visibleSections < guideSections.length && (
+                                    <motion.div
+                                        className="guide-loading"
+                                        animate={{ opacity: [0.4, 1, 0.4] }}
+                                        transition={{ duration: 1.2, repeat: Infinity }}
+                                    >
+                                        <span></span><span></span><span></span>
+                                    </motion.div>
+                                )}
+                            </div>
 
                             <motion.button
                                 className="new-search-button"
                                 onClick={() => {
                                     setShowResults(false);
+                                    setVisibleSections(0);
                                     setTimeout(() => {
                                         setCropDetails(null);
                                         setFormData({
@@ -472,11 +496,11 @@ const CropPrediction = () => {
                                         });
                                     }, 800);
                                 }}
-                                whileHover={{ scale: 1.05, backgroundColor: "rgba(59, 122, 87, 0.2)" }}
+                                whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ delay: 2.5 }}
+                                transition={{ delay: 2.0 }}
                             >
                                 🔄 Try Another Analysis
                             </motion.button>

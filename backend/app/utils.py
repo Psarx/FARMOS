@@ -1,15 +1,17 @@
 import os
 import pandas as pd
 import requests
+from flask import current_app
 from dotenv import load_dotenv
+from huggingface_hub import InferenceClient
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 # Load Hugging Face API Key from .env file
 load_dotenv()
 HF_API_KEY = os.getenv("HF_API_KEY")
-HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct"
-HEADERS = {"Authorization": f"Bearer {HF_API_KEY}"}
+HF_MODEL = "Qwen/Qwen2.5-72B-Instruct"
+hf_client = InferenceClient(token=HF_API_KEY)
 
 def preprocess_data(data):
     """
@@ -33,10 +35,13 @@ def generate_farming_guide(crop, soil_data):
     """
     prompt = f"Generate a beginner-friendly guide for growing {crop}. Soil details: {soil_data}. Include soil preparation, planting, watering, fertilization, and harvesting instructions."
     
-    payload = {"inputs": prompt}
-    response = requests.post(HF_API_URL, headers=HEADERS, json=payload)
-    
-    if response.status_code == 200:
-        return response.json()[0]["generated_text"]
-    else:
-        return f"Error: {response.json()}"
+    try:
+        response = hf_client.chat_completion(
+            model=HF_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1024,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        current_app.logger.error(f"HF API error: {e}", exc_info=True)
+        return f"Error generating farming guide: {str(e)}"
