@@ -83,8 +83,11 @@ def generate_grad_cam_heatmap(img_array, class_index, layer_name="block5_conv3")
     last_conv_layer = model.get_layer(layer_name)
     grad_model = tf.keras.models.Model([model.input], [last_conv_layer.output, model.output])
     
+    img_tensor = tf.cast(img_array, tf.float32)
     with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(img_array)
+        conv_outputs, predictions = grad_model(img_tensor)
+        if isinstance(predictions, list):
+            predictions = predictions[0]
         loss = predictions[:, class_index]
 
     grads = tape.gradient(loss, conv_outputs)
