@@ -6,6 +6,7 @@ joblib
 psycopg2-binary
 Werkzeug
 flask_cors
-dotenv
+python-dotenv
 bcrypt
 huggingface_hub
+requests
